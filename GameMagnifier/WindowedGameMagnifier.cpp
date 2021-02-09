@@ -121,8 +121,8 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
     //float y = (int)((float)GetSystemMetrics(SM_CYSCREEN) * (1.0 - (1.0 / MAGFACTOR)) / 2.0);
     //float x = 500;
     //float y = 500;
-    float x = (float)GetSystemMetrics(SM_CXSCREEN) / 2.0f - ((float)LENS_WIDTH / 2.0f);
-    float y = (float)GetSystemMetrics(SM_CYSCREEN) / 2.0f - ((float)LENS_HEIGHT / 2.0f);
+    float x = (float)GetSystemMetrics(SM_CXSCREEN) / 2.0f;// + ((float)LENS_WIDTH / 2.0f);
+    float y = (float)GetSystemMetrics(SM_CYSCREEN) / 2.0f;// + ((float)LENS_HEIGHT / 2.0f);
 
 
     UpdateWindow(hwndHost);
@@ -259,9 +259,9 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
                     x += xSpd;
 
-                    if (x > (float)GetSystemMetrics(SM_CXSCREEN)) { x = (float)GetSystemMetrics(SM_CXSCREEN); }
+                    if (x + LENS_WIDTH/2 > (float)GetSystemMetrics(SM_CXSCREEN) + LENS_WIDTH / 2) { x = (float)GetSystemMetrics(SM_CXSCREEN) + LENS_WIDTH / 2 - LENS_WIDTH / 2 - 1; }
                     if (x < 0) { x = 0; }
-                    if (y > (float)GetSystemMetrics(SM_CYSCREEN)) { y = (float)GetSystemMetrics(SM_CYSCREEN); }
+                    if (y + LENS_HEIGHT / 2 > (float)GetSystemMetrics(SM_CYSCREEN) + LENS_HEIGHT / 2) { y = (float)GetSystemMetrics(SM_CYSCREEN) + LENS_HEIGHT / 2 - LENS_HEIGHT / 2 - 1; }
                     if (y < 0) { y = 0; }
 
                     y += ySpd;
@@ -290,7 +290,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                 if (rySign < 0 && lySign < 0) {
                     quitTimer += timerInterval;
                 }
-                if (quitTimer > 5000) {
+                if (quitTimer > 2000) {
                     quit = true;
                 }
             }
@@ -403,7 +403,7 @@ BOOL SetupMagnifier(HINSTANCE hinst)
         0, 0, hostWindowRect.right, hostWindowRect.bottom, NULL, NULL, hInst, NULL);
     if (!hwndHost)
     {
-        return FALSE;
+        return FALSE; //
     }
 
     // Make the window opaque.
@@ -457,12 +457,10 @@ void UpdateMagWindow(_In_ int x, _In_ int y)
     RECT sourceRect;
     int borderWidth = GetSystemMetrics(SM_CXFIXEDFRAME);
     int captionHeight = GetSystemMetrics(SM_CYCAPTION);
-    sourceRect.left = (x - (int)((LENS_WIDTH / 2) / MAGFACTOR)) +
-        (int)(borderWidth / MAGFACTOR);
-    sourceRect.top = (y - (int)((LENS_HEIGHT / 2) / MAGFACTOR)) +
-        (int)(captionHeight / MAGFACTOR) + (int)(borderWidth / MAGFACTOR);
-    sourceRect.right = LENS_WIDTH;
-    sourceRect.bottom = LENS_HEIGHT;
+    sourceRect.left = (x - (int)((LENS_WIDTH / 2) / MAGFACTOR)) + (int)(borderWidth / MAGFACTOR);
+    sourceRect.top = (y - (int)((LENS_HEIGHT / 2) / MAGFACTOR)) + (int)(captionHeight / MAGFACTOR) + (int)(borderWidth / MAGFACTOR);
+    sourceRect.right = LENS_WIDTH; //LENS_WIDTH;
+    sourceRect.bottom = LENS_HEIGHT; //LENS_HEIGHT;
 
     // Pass the source rectangle to the magnifier control.
     MagSetWindowSource(hwndMag, sourceRect);
@@ -472,7 +470,8 @@ void UpdateMagWindow(_In_ int x, _In_ int y)
     MoveWindow(hwndHost,
         //(mousePoint.x - LENS_WIDTH / 2),
         //(mousePoint.y - LENS_HEIGHT / 2),
-        x, y,
+        x - LENS_WIDTH / 2,
+        y - LENS_HEIGHT / 2,
         LENS_WIDTH,
         LENS_HEIGHT,
         FALSE);
