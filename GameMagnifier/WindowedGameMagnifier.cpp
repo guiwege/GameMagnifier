@@ -87,7 +87,7 @@ const INT           GUIDE_BUTTON_VALUE = 1024; // 0x0400
 // Forward declarations.
 ATOM                RegisterHostWindowClass(HINSTANCE hInstance);
 BOOL                SetupMagnifier(HINSTANCE hinst);
-LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
+//LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 void UpdateMagWindow(_In_ int x, _In_ int y);
 BOOL                isFullScreen = FALSE;
 float sign(_In_ float n);
@@ -107,7 +107,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 {
 
     bool quit = false;
-    bool isMag = false;
+    bool isMag = true;
     int toggleTimer = 0;
     int quitTimer = 0;
 
@@ -117,51 +117,39 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
     float brakeSpd = 3.0f;
     float accelMult = 5;
 
-    //float x = (int)((float)GetSystemMetrics(SM_CXSCREEN) * (1.0 - (1.0 / MAGFACTOR)) / 2.0);// (float)GetSystemMetrics(SM_CXSCREEN);
-    //float y = (int)((float)GetSystemMetrics(SM_CYSCREEN) * (1.0 - (1.0 / MAGFACTOR)) / 2.0);
-    //float x = 500;
-    //float y = 500;
     float x = (float)GetSystemMetrics(SM_CXSCREEN) / 2.0f;// + ((float)LENS_WIDTH / 2.0f);
     float y = (float)GetSystemMetrics(SM_CYSCREEN) / 2.0f;// + ((float)LENS_HEIGHT / 2.0f);
 
 
-    UpdateWindow(hwndHost);
+    //UpdateWindow(hwndHost);
 
-    // Create a timer to update the control.
-    //UINT_PTR timerId = SetTimer(hwndHost, 0, timerInterval, UpdateMagWindow);
+    // Start with magnifier already open
+    if (isMag) {
+        isMag = true;
+        toggleTimer = 99999; // Can toggle magnifier instantly
+        // Create Window
+        MagInitialize();
+        SetupMagnifier(hInstance);
+        ShowWindow(hwndHost, nCmdShow);
+    }
 
-    // Main message loop.
 
+    // Main loop.
+    BOOL bRet; // Window messages (maximize, minimize, etc)
     MSG msg;
-    BOOL bRet;
     DWORD dwResult; // Controller
-
     while (!quit)
-        //while ((pMR = PeekMessage(&msg, hwndHost, 0, 0, PM_REMOVE)) != 0)
+        //while ((bRet = PeekMessage(&msg, hwndHost, 0, 0, PM_REMOVE)) != 0)
         //while (GetMessage(&msg, hwndHost, 0, 0))
     {
         if (quit) {
             if (isMag) {
                 MagUninitialize();
+                DestroyWindow(hwndHost);
             }
             return 0;
         }
 
-        // Process window stuff, if any
-        if (isMag) {
-            //TranslateMessage(&msg);
-            //DispatchMessage(&msg);
-            bRet = GetMessage(&msg, hwndHost, 0, 0);
-            if (bRet == -1)
-            {
-                // handle the error and possibly exit
-            }
-            else
-            {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-        }
 
         // Controller stuff
         for (DWORD i = 0; i < XUSER_MAX_COUNT; i++)
@@ -254,25 +242,37 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                 }
 
                 if (isMag) {
+                    // Process window messages
+                    bRet = PeekMessage(&msg, hwndHost, 0, 0, PM_REMOVE);
+                    if (bRet == -1)
+                    {
+                        // handle the error and possibly exit
+                    }
+                    else
+                    {
+                        TranslateMessage(&msg);
+                        DispatchMessage(&msg);
+                    }
+
+                    // Update positions
                     if (abs(xSpd) > maxSpd) { xSpd = maxSpd * rxSign; }
                     if (abs(ySpd) > maxSpd) { ySpd = maxSpd * rySign; }
 
                     x += xSpd;
+                    y += ySpd;
 
                     if (x + LENS_WIDTH/2 > (float)GetSystemMetrics(SM_CXSCREEN) + LENS_WIDTH / 2) { x = (float)GetSystemMetrics(SM_CXSCREEN) + LENS_WIDTH / 2 - LENS_WIDTH / 2 - 1; }
                     if (x < 0) { x = 0; }
                     if (y + LENS_HEIGHT / 2 > (float)GetSystemMetrics(SM_CYSCREEN) + LENS_HEIGHT / 2) { y = (float)GetSystemMetrics(SM_CYSCREEN) + LENS_HEIGHT / 2 - LENS_HEIGHT / 2 - 1; }
                     if (y < 0) { y = 0; }
 
-                    y += ySpd;
                 }
 
                 // Toggle magnifier
-                if (leftAnalogPressed && rightAnalogPressed && toggleTimer > 500) {
+                if (leftAnalogPressed && rightAnalogPressed && toggleTimer > 400) {
                     if (!isMag) {
                         isMag = true;
                         toggleTimer = 0;
-
                         // Create Window
                         MagInitialize();
                         SetupMagnifier(hInstance);
@@ -290,9 +290,14 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                 if (rySign < 0 && lySign < 0) {
                     quitTimer += timerInterval;
                 }
+                else {
+                    quitTimer = 0;
+                }
+
                 if (quitTimer > 2000) {
                     quit = true;
-                }
+                } 
+
             }
             else
             {
@@ -308,6 +313,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
     //KillTimer(NULL, timerId);
     MagUninitialize();
+    DestroyWindow(hwndHost);
     //return (int) msg.wParam;
     return 0;
 }
@@ -372,10 +378,8 @@ ATOM RegisterHostWindowClass(HINSTANCE hInstance)
     WNDCLASSEX wcex = {};
 
     wcex.cbSize = sizeof(WNDCLASSEX);
-    //wcex.style          = CS_HREDRAW | CS_VREDRAW;
     wcex.lpfnWndProc = HostWndProc;
     wcex.hInstance = hInstance;
-    //wcex.hCursor        = LoadCursor(NULL, IDC_ARROW);
     wcex.hbrBackground = (HBRUSH)(1 + COLOR_BTNFACE);
     wcex.lpszClassName = WindowClassName;
 
@@ -447,11 +451,6 @@ BOOL SetupMagnifier(HINSTANCE hinst)
 //
 void UpdateMagWindow(_In_ int x, _In_ int y)
 {
-    // Get the mouse coordinates.
-    //POINT mousePoint;
-    //GetCursorPos(&amp; mousePoint);
-    //GetCursorPos(&mousePoint);
-
     // Calculate a source rectangle that is centered at the mouse coordinates. 
     // Size the rectangle so that it fits into the magnifier window (the lens).
     RECT sourceRect;
@@ -468,8 +467,6 @@ void UpdateMagWindow(_In_ int x, _In_ int y)
     // Move the host window so that the origin of the client area lines up
     // with the origin of the magnified source rectangle.
     MoveWindow(hwndHost,
-        //(mousePoint.x - LENS_WIDTH / 2),
-        //(mousePoint.y - LENS_HEIGHT / 2),
         x - LENS_WIDTH / 2,
         y - LENS_HEIGHT / 2,
         LENS_WIDTH,
@@ -478,8 +475,6 @@ void UpdateMagWindow(_In_ int x, _In_ int y)
 
     // Force the magnifier control to redraw itself.
     InvalidateRect(hwndMag, NULL, TRUE);
-
-    //BOOL fSuccess = MagSetFullscreenTransform(MAGFACTOR, x, y);
 
     return;
 }
