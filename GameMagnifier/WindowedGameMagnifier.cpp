@@ -1,40 +1,22 @@
 /*************************************************************************************************
 *
-* File: MagnifierSample.cpp
+* File: WindowedGameMagnifier.cpp
 *
-* Description: Implements a simple control that magnifies the screen, using the
-* Magnification API.
-*
-* The magnification window is quarter-screen by default but can be resized.
-* To make it full-screen, use the Maximize button or double-click the caption
-* bar. To return to partial-screen mode, click on the application icon in the
-* taskbar and press ESC.
-*
-* In full-screen mode, all keystrokes and mouse clicks are passed through to the
-* underlying focused application. In partial-screen mode, the window can receive the
-* focus.
-*
-* Multiple monitors are not supported.
-*
-*
-* Requirements: To compile, link to Magnification.lib. The sample must be run with
-* elevated privileges.
-*
-* The sample is not designed for multimonitor setups.
-*
-*  This file is part of the Microsoft WinfFX SDK Code Samples.
-*
-*  Copyright (C) Microsoft Corporation.  All rights reserved.
-*
-* This source code is intended only as a supplement to Microsoft
-* Development Tools and/or on-line documentation.  See these other
-* materials for detailed information regarding Microsoft code samples.
-*
-* THIS CODE AND INFORMATION ARE PROVIDED AS IS WITHOUT WARRANTY OF ANY
-* KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
-* PARTICULAR PURPOSE.
-*
+* Description: Implements a magnifier that is controlled by XInput
+* 
+* Commands: 
+* -Pressing both analogs at the same time toggles the magnifier
+* -Holding both analogs up for a few seconds closes this app
+* 
+* This program uses Microsoft's Magnification and XInput API.
+* 
+* Please notice that I am no C++ programmer, this was the first time I tabled something like this... 
+* Thus, the Frankenstein code.
+* I appreciate suggestions for improving it.
+* 
+* The idea was just to solve a problem that I have and maybe other people do, which is, 
+* not being able to read some games small texts.
+* 
 *************************************************************************************************/
 
 // Ensure that the following definition is in effect before winuser.h is included.
