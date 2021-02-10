@@ -6,16 +6,19 @@
 * 
 * Commands: 
 * -Pressing both analogs at the same time toggles the magnifier
-* -Holding both analogs up for a few seconds closes this app
+* -Holding both analogs up for a few seconds closes the program
 * 
 * This program uses Microsoft's Magnification and XInput API.
 * 
-* Please notice that I am no C++ programmer, this was the first time I tabled something like this... 
-* Thus, the Frankenstein code.
-* I appreciate suggestions for improving it.
+* Please notice that I am no C++ programmer, this was the first time I tackled something like this,
+* thus, the Frankenstein code... I'd appreciate suggestions on improving it.
 * 
-* The idea was just to solve a problem that I have and maybe other people do, which is, 
+* The idea was just to solve a problem that I have and maybe other people do too, which is, 
 * not being able to read some games small texts.
+* 
+* I've tested this program on Windows 10 Running Cyberpunk without any problems.
+* When running on Windows 8.1, if no game is running, things like Windows Explorer will flicker and I'm
+* not sure why. If game is running, no flickering occurs.* 
 * 
 *************************************************************************************************/
 
