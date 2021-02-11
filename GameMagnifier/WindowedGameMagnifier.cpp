@@ -24,7 +24,7 @@
 * Update Driver > Search in computer > Pick from a list > 
 * Now choose a different driver from the list and reboot your PC. 
 * For me there were only 2 drivers in the list and they had exactly the same name,  
-* I tried the first one and it worked. 
+* I tried the first one and it worked.  
 * 
 * The program will work on Windowed and Windowed Borderless modes. Fullscreen is not supported.
 * 
