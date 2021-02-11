@@ -18,7 +18,9 @@
 * 
 * I've tested this program on Windows 10 Running Cyberpunk without any problems.
 * When running on Windows 8.1, if no game is running, things like Windows Explorer will flicker and I'm
-* not sure why. If game is running, no flickering occurs.* 
+* not sure why. If a game is running, no flickering occurs.* 
+* 
+* Fullscreen mode is not supported, but will work for Windowed and Windowed Borderless modes.
 * 
 *************************************************************************************************/
 
@@ -150,6 +152,8 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                 bool leftAnalogPressed = state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB;
                 bool rightAnalogPressed = state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB;
 
+                bool LT = state.Gamepad.bLeftTrigger;
+
                 // Left analog
                 float LX = state.Gamepad.sThumbLX;
                 float LY = state.Gamepad.sThumbLY*-1;
@@ -158,11 +162,11 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                 float lxSign = sign(LX);
                 float lySign = sign(LY);
 
-                if (lxAbs < lxAbs * INPUT_DEADZONE) { LX = 0; }
-                if (lxAbs > 32767) { LX = INPUT_MAX_ANALOG_VALUE * lxSign; }
+                if (lxAbs < INPUT_MAX_ANALOG_VALUE * INPUT_DEADZONE) { LX = 0; }
+                if (lxAbs > INPUT_MAX_ANALOG_VALUE) { LX = INPUT_MAX_ANALOG_VALUE * lxSign; }
 
-                if (lyAbs < lyAbs * INPUT_DEADZONE) { LY = 0; }
-                if (lyAbs > 32767) { LY = INPUT_MAX_ANALOG_VALUE * lySign; }
+                if (lyAbs < INPUT_MAX_ANALOG_VALUE * INPUT_DEADZONE) { LY = 0; }
+                if (lyAbs > INPUT_MAX_ANALOG_VALUE) { LY = INPUT_MAX_ANALOG_VALUE * lySign; }
 
                 lxSign = sign(LX);
                 lySign = sign(LY);
@@ -176,11 +180,11 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                 float rySign = sign(RY);
 
 
-                if (rxAbs < rxAbs * INPUT_DEADZONE) { RX = 0; }
-                if (rxAbs > 32767) { RX = INPUT_MAX_ANALOG_VALUE * rxSign; }
+                if (rxAbs < INPUT_MAX_ANALOG_VALUE * INPUT_DEADZONE) { RX = 0; }
+                if (rxAbs > INPUT_MAX_ANALOG_VALUE) { RX = INPUT_MAX_ANALOG_VALUE * rxSign; }
 
-                if (ryAbs < ryAbs * INPUT_DEADZONE) { RY = 0; }
-                if (ryAbs > 32767) { RY = INPUT_MAX_ANALOG_VALUE * rySign; }
+                if (ryAbs < INPUT_MAX_ANALOG_VALUE * INPUT_DEADZONE) { RY = 0; }
+                if (ryAbs > INPUT_MAX_ANALOG_VALUE) { RY = INPUT_MAX_ANALOG_VALUE * rySign; }
 
                 float rxRatio = RX / INPUT_MAX_ANALOG_VALUE;
                 float ryRatio = RY / INPUT_MAX_ANALOG_VALUE;
@@ -189,7 +193,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                 rySign = sign(RY);
 
                 std::wstringstream s;
-                s << "RX: " << RX << ", RY: " << quitTimer << "\n";
+                s << "RX: " << RX << ", RY: " << RY << ", LT: " << LT << "\n";
                 OutputDebugString(s.str().c_str());
 
                 if (RX > 0) {
@@ -226,6 +230,10 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                     }
                 }
 
+                if (abs(xSpd) > maxSpd) { xSpd = maxSpd * rxSign; }
+                if (abs(ySpd) > maxSpd) { ySpd = maxSpd * rySign; }
+
+
                 if (isMag) {
                     // Process window messages
                     bRet = PeekMessage(&msg, hwndHost, 0, 0, PM_REMOVE);
@@ -239,18 +247,17 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                         DispatchMessage(&msg);
                     }
 
+
                     // Update positions
-                    if (abs(xSpd) > maxSpd) { xSpd = maxSpd * rxSign; }
-                    if (abs(ySpd) > maxSpd) { ySpd = maxSpd * rySign; }
+                    if (!LT) {
+                        if (x + LENS_WIDTH / 2 > (float)GetSystemMetrics(SM_CXSCREEN) + LENS_WIDTH / 2) { x = (float)GetSystemMetrics(SM_CXSCREEN) + LENS_WIDTH / 2 - LENS_WIDTH / 2 - 1; }
+                        if (x < 0) { x = 0; }
+                        if (y + LENS_HEIGHT / 2 > (float)GetSystemMetrics(SM_CYSCREEN) + LENS_HEIGHT / 2) { y = (float)GetSystemMetrics(SM_CYSCREEN) + LENS_HEIGHT / 2 - LENS_HEIGHT / 2 - 1; }
+                        if (y < 0) { y = 0; }
 
-                    x += xSpd;
-                    y += ySpd;
-
-                    if (x + LENS_WIDTH/2 > (float)GetSystemMetrics(SM_CXSCREEN) + LENS_WIDTH / 2) { x = (float)GetSystemMetrics(SM_CXSCREEN) + LENS_WIDTH / 2 - LENS_WIDTH / 2 - 1; }
-                    if (x < 0) { x = 0; }
-                    if (y + LENS_HEIGHT / 2 > (float)GetSystemMetrics(SM_CYSCREEN) + LENS_HEIGHT / 2) { y = (float)GetSystemMetrics(SM_CYSCREEN) + LENS_HEIGHT / 2 - LENS_HEIGHT / 2 - 1; }
-                    if (y < 0) { y = 0; }
-
+                        x += xSpd;
+                        y += ySpd;
+                    }
                 }
 
                 // Toggle magnifier
