@@ -3,24 +3,30 @@
 * File: WindowedGameMagnifier.cpp
 *
 * Description: Implements a magnifier that is controlled by XInput
-* 
-* Commands: 
-* -Pressing both analogs at the same time toggles the magnifier
-* -Holding both analogs up for a few seconds closes the program
-* 
 * This program uses Microsoft's Magnification and XInput API.
 * 
-* Please notice that I am no C++ programmer, this was the first time I tackled something like this,
-* thus, the Frankenstein code... I'd appreciate suggestions on improving it.
+* Basic commands: 
+* -Pressing both analogs at the same time toggles the magnifier.
+* -Use the right analog to move the magnifier.
+* -Holding both analogs up for a few seconds closes the program.
+* -Holding LT will hold the magnifier in place.
 * 
-* The idea was just to solve a problem that I have and maybe other people do too, which is, 
-* not being able to read some games small texts.
+* If you want to use the Guide Button to toggle the magnifier on and off, 
+* follow the steps below:
+* 1. Put xinput1_3.dll in this apps folder.
 * 
-* I've tested this program on Windows 10 Running Cyberpunk without any problems.
-* When running on Windows 8.1, if no game is running, things like Windows Explorer will flicker and I'm
-* not sure why. If a game is running, no flickering occurs.* 
+* You are done if your version of Windows is below Windows 10.
+* For Windows 10, it seems that there is an update that disables the Guide Button, 
+* and in order to get it working again you will have to follow a few more steps 
+* (Credits to nullskillz from Steam forums):
 * 
-* Fullscreen mode is not supported, but will work for Windowed and Windowed Borderless modes.
+* 2. Go to Device Manager > XBOX 360 Peripherals > Right click your XBOX Controller > 
+* Update Driver > Search in computer > Pick from a list > 
+* Now choose a different driver from the list and reboot your PC. 
+* For me there were only 2 drivers in the list and they had exactly the same name, 
+* I tried the first one and it worked.
+* 
+* The program will work on Windowed and Windowed Borderless modes. Fullscreen is not supported.
 * 
 *************************************************************************************************/
 
@@ -80,7 +86,23 @@ BOOL                isFullScreen = FALSE;
 float sign(_In_ float n);
 
 
+// Guide Button Setups
+typedef struct
+{
+    unsigned long eventCount;
+    WORD                                wButtons;
+    BYTE                                bLeftTrigger;
+    BYTE                                bRightTrigger;
+    SHORT                               sThumbLX;
+    SHORT                               sThumbLY;
+    SHORT                               sThumbRX;
+    SHORT                               sThumbRY;
+} XINPUT_GAMEPAD_SECRET;
 
+typedef int(__stdcall* secret_get_gamepad) (int, XINPUT_GAMEPAD_SECRET*); // function pointer to secret (guide button compatible) getstate 
+HINSTANCE xinput_dll = LoadLibrary(L"xinput1_3.dll");
+secret_get_gamepad  gpad = (secret_get_gamepad) GetProcAddress(xinput_dll, (LPCSTR)100); // load ordinal 100
+// End Guide Button Setups
 
 //
 // FUNCTION: WinMain()
@@ -149,10 +171,27 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
 
             if (dwResult == ERROR_SUCCESS)
             {
+
+                bool GB = 0; // Guide Button (a.k.a Home)
+
+                if (xinput_dll) {
+                    XINPUT_GAMEPAD_SECRET dllGamepad;
+                    gpad(i, &dllGamepad);
+                    //LPCWSTR guidePressed = L"false";
+                    //if (state.Gamepad.wButtons & GUIDE_BUTTON_VALUE)
+                    if (dllGamepad.wButtons & GUIDE_BUTTON_VALUE)
+                    {
+                        //guidePressed = L"true ";
+                        //OutputDebugString(L"Guide button is down.\n");
+                        GB = 1;
+                    }
+                }
+
                 bool leftAnalogPressed = state.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_THUMB;
                 bool rightAnalogPressed = state.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB;
 
                 bool LT = state.Gamepad.bLeftTrigger;
+                
 
                 // Left analog
                 float LX = state.Gamepad.sThumbLX;
@@ -261,7 +300,8 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance,
                 }
 
                 // Toggle magnifier
-                if (leftAnalogPressed && rightAnalogPressed && toggleTimer > 400) {
+                if ((leftAnalogPressed && rightAnalogPressed && toggleTimer > 400)
+                || (GB && toggleTimer > 400)) {
                     if (!isMag) {
                         isMag = true;
                         toggleTimer = 0;
@@ -482,4 +522,12 @@ float sign(_In_ float n) {
     else {
         return -1;
     }
+}
+
+BOOL FileExists(LPCTSTR szPath)
+{
+    DWORD dwAttrib = GetFileAttributes(szPath);
+
+    return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
+        !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
