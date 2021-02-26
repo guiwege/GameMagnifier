@@ -1,0 +1,1 @@
+cmd /c taskkill /f /im GameMagnifier.exe

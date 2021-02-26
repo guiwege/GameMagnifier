@@ -19,4 +19,13 @@
       <Filter>Arquivos de Origem</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Release\xinput1_3.dll" />
+    <None Include="files\start.bat">
+      <Filter>Arquivos de Origem</Filter>
+    </None>
+    <None Include="files\close.bat">
+      <Filter>Arquivos de Origem</Filter>
+    </None>
+  </ItemGroup>
 </Project>
