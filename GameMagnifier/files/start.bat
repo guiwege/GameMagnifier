@@ -1,1 +1,1 @@
-cmd /c GameMagnifier.exe
+start /b cmd /c GameMagnifier.exe
