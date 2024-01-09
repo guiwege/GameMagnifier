@@ -14,7 +14,8 @@ If you want to use the Guide Button to toggle the magnifier on and off,
 follow the steps below:
 1. Put xinput1_3.dll in this apps folder.
 
-You are done if your version of Windows is below Windows 10.
+That's it if your version of Windows is below 10.
+
 For Windows 10, it seems that there is an update that disables the Guide Button, 
 and in order to get it working again you will have to follow a few more steps 
 (Credits to nullskillz from Steam forums):
